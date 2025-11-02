@@ -8,7 +8,7 @@ const videoSchema = new Schema({
     },
     thumbnail: {
         type: String,
-        required: true,
+        // required: true,
     },
     owner: {
         type: Schema.Types.ObjectId,
@@ -25,7 +25,7 @@ const videoSchema = new Schema({
     },
     duration: {
         type: Number,
-        required: true,
+        // required: true,
     },
     views: {
         type: Number,

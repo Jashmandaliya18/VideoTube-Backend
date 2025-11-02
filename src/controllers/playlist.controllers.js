@@ -4,10 +4,12 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { Apierror } from "../utils/Apierror.js"
 import { Apiresponce } from "../utils/Apiresponce.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Video } from "../models/video.models.js"
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
     // TODO: Create Playlist
+
     const { name, description } = req.body
 
     if (!name) {
@@ -17,7 +19,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
         throw new Apierror(400, "Playlist Description is required");
     }
 
-    const exitedPlaylist = Playlist.find({ name });
+    const exitedPlaylist = await Playlist.findOne({ name });
 
     if (exitedPlaylist) {
         throw new Apierror(409, "Playlist with this name is already existed")
@@ -29,14 +31,22 @@ const createPlaylist = asyncHandler(async (req, res) => {
     if (!video) {
         throw new Apierror(501, "Video upload failed");
     }
+    const newVideo = await Video.create({
+        videoFile: video.url,
+        thumbnail: "",
+        owner: req.user._id,
+        title: "Sample Title",
+        description: "Sample Description"
+    });
 
     const playlist = await Playlist.create({
-        name: name.toLowercase(),
+        name: name.toLowerCase(),
         description,
-        video: video.url,
+        video: [newVideo._id],
+        owner: req.user._id
     })
 
-    const createdPlaylist = Playlist.findById(playlist._id)
+    const createdPlaylist = await Playlist.findById(playlist._id)
 
     if (!createdPlaylist) {
         throw new Apierror(500, "Error while creating playlist")
@@ -45,7 +55,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
     console.log("Playlist Created Successfully");
 
     return res
-        .status(200)
+        .status(201)
         .json(
             new Apiresponce(
                 createdPlaylist,
@@ -61,27 +71,30 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     // TODO: get playlist by id
-    // const { id: playlistId } = req.params
+    const { playlistId } = req.params
 
-    // if (!playlistId) {
-    //     throw new Apierror(401, "Playlist Id is required")
-    // }
+    if (!playlistId) {
+        throw new Apierror(401, "Playlist Id is required")
+    }
 
-    // const playlist = await Playlist.findById(playlistId).populate("video")
+    const playlist = await Playlist.findById(playlistId).populate("video")
 
-    // if (!playlist) {
-    //     throw new Apierror(401, "Playlist not found")
-    // }
+    if (!playlist) {
+        throw new Apierror(401, "Playlist not found")
+    }
 
-    // return res
-    //     .status(200)
-    //     .json(
-    //         new Apiresponce(
-    //             200,
-    //             playlist,
-    //             "Playlist fetched successfully"
-    //         )
-    //     )
+    console.log("Playlist fetched successfully");
+
+
+    return res
+        .status(200)
+        .json(
+            new Apiresponce(
+                200,
+                playlist,
+                "Playlist fetched successfully"
+            )
+        )
 })
 
 
